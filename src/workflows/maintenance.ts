@@ -9,7 +9,7 @@ export async function maintainStableVersionBranches(
     supportPolicy: SupportPolicy,
     staleVersionMatcher: StableVersionMatcher
 ) {
-    console.info(`Running stable version maintenance for latest release ${releasedVersion}`)
+    console.info(`running stable version maintenance for latest release ${releasedVersion}`)
     const releaseTag = await git.getTag(`${releasedVersion.major}.${releasedVersion.minor}.${releasedVersion.patch}`);
     // create stable-version branch for newly released version
     console.info(`creating stable version branch for release tag ${releaseTag.name} with sha ${releaseTag.sha}`);
@@ -17,15 +17,20 @@ export async function maintainStableVersionBranches(
     const stableVersionBranch = await git.createBranchFromTag(releaseTag, `stable-${stableVersion.major}.${stableVersion.minor}`)
     console.info(`successfully created stable version branch ${stableVersionBranch.name} with sha ${stableVersionBranch.sha}`);
     // delete all stable-version branches based on support policy config
-    git.getBranches()
-        .map(it => toStaleVersionBranch(staleVersionMatcher, it))
+    const stableVersionBranches = await getStableVersionBranches(git, staleVersionMatcher)
+        stableVersionBranches
+            .filter(it => !supportPolicy.supports(it?.version))
+            .forEach(it => {
+                console.info(`deleting branch ${it?.branch.name} with sha ${it?.branch.sha} for unsupported stable version ${it?.version.major}.${it?.version.minor}.`)
+                git.deleteBranch(it?.branch)
+            })
+    console.info('stable version maintenance completed.')
+}
+
+export async function getStableVersionBranches(git: GitControl, matcher: StableVersionMatcher): Promise<StableVersionBranch[]> {
+    return git.getBranches()
+        .map(it => toStaleVersionBranch(matcher, it))
         .filter( it => it !== null)
-        .filter(it => !supportPolicy.supports(it?.version))
-        .forEach(it => {
-            console.info(`Deleting branch ${it?.branch.name} with sha ${it?.branch.sha} for unsupported stable version ${it?.version.major}.${it?.version.minor}.`)
-            git.deleteBranch(it?.branch)
-        })
-    console.info('Stable version maintenance completed.')
 }
 
 interface StableVersionBranch {

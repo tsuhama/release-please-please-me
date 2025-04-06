@@ -3,10 +3,11 @@ import { Octokit } from "@octokit/rest";
 
 export interface GitControl {
     getBranches(): Branch[]
+    getBranch(branchName: string): Promise<Branch>
     getTag(tagName: string): Promise<Tag>
     createBranchFromTag(tag: Tag, newBranchName: string): Promise<Branch>
     deleteBranch(branch: Branch): Promise<void>
-    createPullRequest(sourceBranch: Branch, targetBranch: Branch): PullRequest
+    createPullRequest(sourceBranch: Branch, targetBranch: Branch): Promise<PullRequest>
 }
 
 export interface Repository {
@@ -49,6 +50,23 @@ export class GitHubControl implements GitControl {
 
     constructor(readonly octokit: Octokit, readonly repository: Repository) {}
 
+    async getBranch(branchName: string): Promise<Branch> {
+        const {
+            data: {
+                object: { sha, url }
+            }
+        } = await this.octokit.git.getRef({
+            repo: this.repository.repo,
+            owner: this.repository.owner,
+            ref: `heads/${branchName}`,
+        })
+        return {
+            name: branchName,
+            url: url,
+            sha: sha,
+        }
+    }
+
     async getTag(tagName: string): Promise<Tag> {
         const {
             data: {
@@ -83,7 +101,7 @@ export class GitHubControl implements GitControl {
         };
     }
 
-    createPullRequest(sourceBranch: Branch, targetBranch: Branch): PullRequest {
+    async createPullRequest(sourceBranch: Branch, targetBranch: Branch): Promise<PullRequest> {
         return {
             baseBranchName: "",
             number: 0,
