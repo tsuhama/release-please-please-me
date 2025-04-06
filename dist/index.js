@@ -32716,7 +32716,9 @@ async function main() {
     const policy = createSupportPolicy(inputs, releaseVersion);
     const matcher = createStableVersionBranchMatcher(inputs);
     // run maintenance
+    core.info("Running maintenance for stable version branches");
     await (0, maintenance_1.maintainStableVersionBranches)(github, releaseVersion, policy, matcher);
+    core.info("Completed maintenance.");
 }
 function parseActionInputs() {
     return {
@@ -32737,6 +32739,11 @@ function createSupportPolicy(inputs, latestVersion) {
 }
 function createStableVersionBranchMatcher(inputs) {
     return new maintenance_1.PrefixStableVersionMatcher(inputs.stableVersionBranchPrefix);
+}
+if (require.main === require.cache[eval('__filename')]) {
+    main().catch(err => {
+        core.setFailed(`release-please-please-me failed: ${err.message}`);
+    });
 }
 
 
