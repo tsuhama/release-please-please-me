@@ -52,3 +52,9 @@ function createSupportPolicy(inputs: ActionInputs, latestVersion: SemanticVersio
 function createStableVersionBranchMatcher(inputs: ActionInputs): StableVersionMatcher {
     return new PrefixStableVersionMatcher(inputs.stableVersionBranchPrefix);
 }
+
+if (require.main === module) {
+    main().catch(err => {
+        core.setFailed(`release-please-please-me failed: ${err.message}`)
+    })
+}
