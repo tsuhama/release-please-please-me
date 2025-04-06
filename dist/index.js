@@ -32520,6 +32520,18 @@ class GitHubControl {
         this.octokit = octokit;
         this.repository = repository;
     }
+    async getBranch(branchName) {
+        const { data: { object: { sha, url } } } = await this.octokit.git.getRef({
+            repo: this.repository.repo,
+            owner: this.repository.owner,
+            ref: `heads/${branchName}`,
+        });
+        return {
+            name: branchName,
+            url: url,
+            sha: sha,
+        };
+    }
     async getTag(tagName) {
         const { data: { object: { sha } } } = await this.octokit.git.getRef({
             repo: this.repository.repo,
@@ -32544,7 +32556,7 @@ class GitHubControl {
             sha: sha
         };
     }
-    createPullRequest(sourceBranch, targetBranch) {
+    async createPullRequest(sourceBranch, targetBranch) {
         return {
             baseBranchName: "",
             number: 0,
@@ -32709,16 +32721,25 @@ const git_1 = __nccwpck_require__(7376);
 const support_1 = __nccwpck_require__(3236);
 const version_1 = __nccwpck_require__(3323);
 const maintenance_1 = __nccwpck_require__(6953);
+const backport_1 = __nccwpck_require__(6284);
 async function main() {
     const inputs = parseActionInputs();
-    const releaseVersion = (0, version_1.parseSemanticVersion)(inputs.latestReleaseVersion);
     const github = createGitOperations(inputs);
-    const policy = createSupportPolicy(inputs, releaseVersion);
     const matcher = createStableVersionBranchMatcher(inputs);
     // run maintenance
-    core.info("Running maintenance for stable version branches");
-    await (0, maintenance_1.maintainStableVersionBranches)(github, releaseVersion, policy, matcher);
-    core.info("Completed maintenance.");
+    if (!inputs.skipMaintenance) {
+        core.info('Running maintenance for stable version branches...');
+        const releaseVersion = (0, version_1.parseSemanticVersion)(inputs.latestReleaseVersion);
+        const policy = createSupportPolicy(inputs, releaseVersion);
+        await (0, maintenance_1.maintainStableVersionBranches)(github, releaseVersion, policy, matcher);
+        core.info('Completed maintenance.');
+    }
+    if (!inputs.skipBackportPRs) {
+        core.info("Running backport pull requests creation...");
+        //TODO
+        await (0, backport_1.backportFixBranch)(github, matcher, "todo");
+        core.info('Completed backporting.');
+    }
 }
 function parseActionInputs() {
     return {
@@ -32727,6 +32748,8 @@ function parseActionInputs() {
         stableVersionBranchPrefix: core.getInput('stable-version-branch-prefix', { required: true }),
         minorVersionSupportPolicy: parseInt(core.getInput('minor-version-support-policy', { required: true })),
         majorVersionSupportPolicy: parseInt(core.getInput('major-version-support-policy', { required: true })),
+        skipMaintenance: core.getBooleanInput('skip-maintenance', { required: true }),
+        skipBackportPRs: core.getBooleanInput('skip-backport-pull-requests', { required: true }),
     };
 }
 function createGitOperations(inputs) {
@@ -32749,6 +32772,27 @@ if (require.main === require.cache[eval('__filename')]) {
 
 /***/ }),
 
+/***/ 6284:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.backportFixBranch = backportFixBranch;
+const maintenance_1 = __nccwpck_require__(6953);
+async function backportFixBranch(git, matcher, fixBranchName) {
+    const stableVersionBranches = await (0, maintenance_1.getStableVersionBranches)(git, matcher);
+    const fixBranch = await git.getBranch(fixBranchName);
+    for (const it of stableVersionBranches) {
+        console.info(`creating backport pull request from ${fixBranchName} against ${it.branch.name}.`);
+        const pr = await git.createPullRequest(fixBranch, it.branch);
+        console.info(`successfully created backport pull request ${pr.number} for stable version ${it.version}.`);
+    }
+}
+
+
+/***/ }),
+
 /***/ 6953:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -32757,10 +32801,11 @@ if (require.main === require.cache[eval('__filename')]) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PrefixStableVersionMatcher = void 0;
 exports.maintainStableVersionBranches = maintainStableVersionBranches;
+exports.getStableVersionBranches = getStableVersionBranches;
 const version_1 = __nccwpck_require__(3323);
 // should be executed on creation of LATEST release and NOT on backport releases
 async function maintainStableVersionBranches(git, releasedVersion, supportPolicy, staleVersionMatcher) {
-    console.info(`Running stable version maintenance for latest release ${releasedVersion}`);
+    console.info(`running stable version maintenance for latest release ${releasedVersion}`);
     const releaseTag = await git.getTag(`${releasedVersion.major}.${releasedVersion.minor}.${releasedVersion.patch}`);
     // create stable-version branch for newly released version
     console.info(`creating stable version branch for release tag ${releaseTag.name} with sha ${releaseTag.sha}`);
@@ -32768,15 +32813,19 @@ async function maintainStableVersionBranches(git, releasedVersion, supportPolicy
     const stableVersionBranch = await git.createBranchFromTag(releaseTag, `stable-${stableVersion.major}.${stableVersion.minor}`);
     console.info(`successfully created stable version branch ${stableVersionBranch.name} with sha ${stableVersionBranch.sha}`);
     // delete all stable-version branches based on support policy config
-    git.getBranches()
-        .map(it => toStaleVersionBranch(staleVersionMatcher, it))
-        .filter(it => it !== null)
+    const stableVersionBranches = await getStableVersionBranches(git, staleVersionMatcher);
+    stableVersionBranches
         .filter(it => !supportPolicy.supports(it?.version))
         .forEach(it => {
-        console.info(`Deleting branch ${it?.branch.name} with sha ${it?.branch.sha} for unsupported stable version ${it?.version.major}.${it?.version.minor}.`);
+        console.info(`deleting branch ${it?.branch.name} with sha ${it?.branch.sha} for unsupported stable version ${it?.version.major}.${it?.version.minor}.`);
         git.deleteBranch(it?.branch);
     });
-    console.info('Stable version maintenance completed.');
+    console.info('stable version maintenance completed.');
+}
+async function getStableVersionBranches(git, matcher) {
+    return git.getBranches()
+        .map(it => toStaleVersionBranch(matcher, it))
+        .filter(it => it !== null);
 }
 class PrefixStableVersionMatcher {
     prefix;
