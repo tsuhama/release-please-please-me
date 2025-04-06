@@ -12,7 +12,9 @@ export async function main() {
     const policy = createSupportPolicy(inputs, releaseVersion);
     const matcher = createStableVersionBranchMatcher(inputs);
     // run maintenance
+    core.info("Running maintenance for stable version branches")
     await maintainStableVersionBranches(github, releaseVersion, policy, matcher);
+    core.info("Completed maintenance.")
 }
 
 interface ActionInputs {
