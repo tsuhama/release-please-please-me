@@ -8,6 +8,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
+    "test": "npx jest",
     "build": "tsc --build"
   },
   "devDependencies": {
