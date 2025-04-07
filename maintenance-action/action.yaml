@@ -1,5 +1,5 @@
 name: 'release-please-please-me-action'
-description: 'automated advanced release workflows using conventional commits'
+description: 'automated maintenance of stable version branches'
 author: 'tsuhama'
 inputs:
   token:
@@ -21,15 +21,7 @@ inputs:
     description: 'n-x policy for major versions, defaults to n-1 including the n-1-hth release version'
     required: false
     default: '1'
-  skip-maintenance:
-    description: 'whether to skip the sub workflow for creating the stable version branch and running the clean up task'
-    required: false
-    default: 'false'
-  skip-backport-pull-requests:
-    description: 'whether to skip the sub workflow for automatically creating backport pull requests'
-    required: false
-    default: 'true'
 
 runs:
   using: 'node20'
-  main: 'dist/index.js'
+  main: '../dist/actions/maintenance-action.js'

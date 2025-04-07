@@ -1,0 +1,19 @@
+name: 'release-please-please-me-backport-action'
+description: 'automated pull request creation for backporting bug and security fixes on stable version branches'
+author: 'tsuhama'
+inputs:
+  token:
+    description: 'GitHub token for creating and grooming release PRs, defaults to using secrets.GITHUB_TOKEN'
+    required: false
+    default: ${{ github.token }}
+  stable-version-branch-prefix:
+    description: 'Prefix for stable version branch names, defaults to stable-'
+    required: false
+    default: 'stable-'
+  source-branch:
+    description: 'name of the source branch containing the fix which needs to be backported to stable version branches'
+    required: true
+
+runs:
+  using: 'node20'
+  main: '../dist/actions/backport-action.js'

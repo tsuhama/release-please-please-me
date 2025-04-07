@@ -1,10 +1,10 @@
 import * as core from '@actions/core'
 import {Octokit} from "@octokit/rest";
-import {GitControl, GitHubControl} from "./api/git";
-import {NMinusRangeSupportPolicy, SupportPolicy} from "./core/support";
-import {parseSemanticVersion, SemanticVersion, toStableVersion} from "./core/version";
-import {maintainStableVersionBranches, PrefixStableVersionMatcher, StableVersionMatcher} from "./workflows/maintenance";
-import {backportFixBranch} from "./workflows/backport";
+import {GitControl, GitHubControl} from "../api/git";
+import {NMinusRangeSupportPolicy, SupportPolicy} from "../core/support";
+import {parseSemanticVersion, SemanticVersion, toStableVersion} from "../core/version";
+import {maintainStableVersionBranches, PrefixStableVersionMatcher, StableVersionMatcher} from "../workflows/maintenance";
+import {backportFixBranch} from "../workflows/backport";
 
 export async function main() {
     const inputs = parseActionInputs();
