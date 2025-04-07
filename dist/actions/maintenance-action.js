@@ -40,25 +40,16 @@ const git_1 = require("../api/git");
 const support_1 = require("../core/support");
 const version_1 = require("../core/version");
 const maintenance_1 = require("../workflows/maintenance");
-const backport_1 = require("../workflows/backport");
 async function main() {
     const inputs = parseActionInputs();
     const github = createGitOperations(inputs);
     const matcher = createStableVersionBranchMatcher(inputs);
     // run maintenance
-    if (!inputs.skipMaintenance) {
-        core.info('Running maintenance for stable version branches...');
-        const releaseVersion = (0, version_1.parseSemanticVersion)(inputs.latestReleaseVersion);
-        const policy = createSupportPolicy(inputs, releaseVersion);
-        await (0, maintenance_1.maintainStableVersionBranches)(github, releaseVersion, policy, matcher);
-        core.info('Completed maintenance.');
-    }
-    if (!inputs.skipBackportPRs) {
-        core.info("Running backport pull requests creation...");
-        //TODO
-        await (0, backport_1.backportFixBranch)(github, matcher, "todo");
-        core.info('Completed backporting.');
-    }
+    core.info('Running maintenance for stable version branches...');
+    const releaseVersion = (0, version_1.parseSemanticVersion)(inputs.latestReleaseVersion);
+    const policy = createSupportPolicy(inputs, releaseVersion);
+    await (0, maintenance_1.maintainStableVersionBranches)(github, releaseVersion, policy, matcher);
+    core.info('Completed maintenance.');
 }
 function parseActionInputs() {
     return {
@@ -67,8 +58,6 @@ function parseActionInputs() {
         stableVersionBranchPrefix: core.getInput('stable-version-branch-prefix', { required: true }),
         minorVersionSupportPolicy: parseInt(core.getInput('minor-version-support-policy', { required: true })),
         majorVersionSupportPolicy: parseInt(core.getInput('major-version-support-policy', { required: true })),
-        skipMaintenance: core.getBooleanInput('skip-maintenance', { required: true }),
-        skipBackportPRs: core.getBooleanInput('skip-backport-pull-requests', { required: true }),
     };
 }
 function createGitOperations(inputs) {
