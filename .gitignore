@@ -2,6 +2,3 @@
 .idea
 *imp
 .DS_STORE
-
-# Deps
-node_modules
