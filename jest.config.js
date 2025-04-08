@@ -24,6 +24,7 @@ export default {
   testEnvironment: "node",
   testMatch: ["**/test/**/*.ts"],
   testPathIgnorePatterns: ["/dist/", "/node_modules/"],
+  resolver: "ts-jest-resolver",
   transform: {
     "^.+\\.ts$": [
       "ts-jest",
