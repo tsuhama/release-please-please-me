@@ -107,7 +107,9 @@ export class GitHubControl implements GitControl {
   }
 
   async createPullRequest(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     sourceBranch: Branch,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     targetBranch: Branch,
   ): Promise<PullRequest> {
     return {
@@ -122,7 +124,7 @@ export class GitHubControl implements GitControl {
   }
 
   async deleteBranch(branch: Branch): Promise<void> {
-    const {} = await this.octokit.git.deleteRef({
+    await this.octokit.git.deleteRef({
       owner: this.repository.owner,
       repo: this.repository.repo,
       ref: branch.sha,
