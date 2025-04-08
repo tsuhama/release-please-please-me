@@ -9,11 +9,14 @@
   },
   "scripts": {
     "test": "npx jest",
-    "build": "tsc --build"
+    "build": "tsc --build",
+    "fmt-check": "npx prettier --check .",
+    "fmt-apply": "npx prettier --write ."
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "jest": "^29.7.0",
+    "prettier": "3.5.3",
     "ts-jest": "^29.3.1",
     "typescript": "^5.8.2"
   },
