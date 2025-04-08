@@ -25,6 +25,10 @@ jobs:
         id: npm-ci
         run: npm ci
 
+      - name: Check Format
+        id: check-fmt
+        run: npm run fmt-check
+
       - name: Test
         id: npm-ci-test
         run: npm run test
