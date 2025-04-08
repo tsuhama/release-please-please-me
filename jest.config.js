@@ -25,9 +25,7 @@ export default {
   testMatch: ["**/test/**/*.ts"],
   testPathIgnorePatterns: ["/dist/", "/node_modules/"],
   transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-    ]
+    "^.+\\.ts$": ["ts-jest"],
   },
   verbose: true,
 };
