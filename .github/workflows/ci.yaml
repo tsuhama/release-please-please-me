@@ -37,6 +37,10 @@ jobs:
         id: npm-ci-test
         run: npm run test
   maintain-release:
+    permissions:
+      contents: write
+      pull-requests: write
     needs: build
     if: github.ref == 'refs/heads/main'
+    secrets: inherit
     uses: ./.github/workflows/maintain-release.yaml
