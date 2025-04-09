@@ -36,3 +36,7 @@ jobs:
       - name: Test
         id: npm-ci-test
         run: npm run test
+  maintain-release:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/maintain-release.yaml
