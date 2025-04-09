@@ -1,0 +1,19 @@
+name: Maintain Release
+
+on:
+  workflow_call:
+
+jobs:
+  maintain-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: release please
+        uses: google-github-actions/release-please-action@v4
+        id: release-please
+        with:
+          # obtain package and version from package.json
+          release-type: node
+      #- name: npm publish
+      #  id: npm-publish
+      #  if: ${{ steps.release-please.outputs.release_created }}
+      #  run: npm publish
