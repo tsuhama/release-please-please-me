@@ -13,6 +13,7 @@ jobs:
         with:
           # obtain package and version from package.json
           release-type: node
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
       #- name: npm publish
       #  id: npm-publish
       #  if: ${{ steps.release-please.outputs.release_created }}
